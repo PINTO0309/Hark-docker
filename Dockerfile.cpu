@@ -1,0 +1,210 @@
+# Hark 3.5.0 - CPU ver
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV USERNAME=user
+ARG WKDIR=/workdir
+ARG HARKVER=3.5.0
+ARG DISTRO=jammy
+
+# https://hark.jp/install/linux/
+RUN apt-get update \
+    && apt-get install -y \
+        build-essential \
+        gfortran \
+        libtool \
+        cmake \
+        cmake-extras \
+        curl \
+        git \
+        pkgconf \
+        nano \
+        libxml2-dev \
+        libzip-dev \
+        libasound2-dev \
+        libsndfile1-dev \
+        libsdl2-dev \
+        libopenblas-dev \
+        liblapack-dev \
+        liblapacke-dev \
+        libeigen3-dev \
+        libfmt-dev \
+        libgtk2.0-dev \
+        libpopt-dev \
+        python-is-python3 \
+        mosquitto \
+        libmosquittopp-dev \
+        lsb-release \
+        pybind11-dev \
+        python2.7 \
+        python3-dev \
+        python3-daemon \
+        python3-paho-mqtt \
+        python3-pybind11 \
+        python3-pkgconfig \
+        python3-pip \
+        python3-setuptools \
+        python3-scipy \
+        python3-matplotlib \
+        python3-kivy \
+        sudo \
+        automake \
+        autoconf \
+        zlib1g-dev \
+        libopenblas-base \
+        libopenblas-dev \
+        sox \
+        subversion \
+        unzip \
+        wget \
+        pulseaudio \
+        pulseaudio-utils \
+    && sed -i 's/# set linenumbers/set linenumbers/g' /etc/nanorc
+
+RUN python -m pip install kivy_garden.graph \
+        --extra-index-url https://kivy-garden.github.io/simple/ \
+    && pip install numpy==1.24.3
+
+RUN echo "root:root" | chpasswd \
+    && adduser --disabled-password --gecos "" "${USERNAME}" \
+    && echo "${USERNAME}:${USERNAME}" | chpasswd \
+    && echo "%${USERNAME}    ALL=(ALL)   NOPASSWD:    ALL" >> /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME} \
+    && mkdir -p ${WKDIR} \
+    && chown ${USERNAME}:${USERNAME} ${WKDIR}
+
+USER ${USERNAME}
+WORKDIR ${WKDIR}
+
+RUN sudo curl -sSL http://archive.hark.jp/harkrepos/public.gpg -o /usr/share/keyrings/hark-archive-keyring.asc \
+    && sudo bash -c 'echo -e "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hark-archive-keyring.asc] \
+    http://archive.hark.jp/harkrepos $(lsb_release -cs) non-free\ndeb-src [arch=$(dpkg --print-architecture) \
+    signed-by=/usr/share/keyrings/hark-archive-keyring.asc] http://archive.hark.jp/harkrepos \
+    $(lsb_release -cs) non-free" > /etc/apt/sources.list.d/hark.list'
+
+RUN sudo apt-get update
+
+# build & install libhark-netapi3
+RUN sudo apt-get source libhark-netapi3 \
+    && cd libhark-netapi3-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir -p build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install libharkio3
+RUN sudo apt-get source libharkio3 \
+    && cd libharkio3-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install hark-base3
+RUN sudo apt-get source hark-base3 \
+    && cd hark-base3-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install harkmw
+RUN sudo apt-get source harkmw \
+    && cd harkmw-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && python setup.py build \
+    && sudo python setup.py install
+
+# build & install hark-core
+RUN sudo apt-get source hark-core \
+    && cd hark-core-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install hark-linux
+RUN sudo apt-get source hark-linux \
+    && cd hark-linux-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_RASP=OFF .. \
+    && make \
+    && sudo make install
+
+# build & install hark-gtkplot
+RUN sudo apt-get source hark-gtkplot \
+    && cd hark-gtkplot-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install python3-harkpython, hark-python3
+RUN sudo apt-get source python3-harkpython \
+    && sudo apt-get source hark-python3 \
+    && cd python3-harkpython-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && sudo python setup.py install \
+    && cd .. \
+    && cd hark-python3-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+# build & install harktool5
+RUN sudo apt-get source harktool5 \
+    && cd harktool5-*.*.* \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir build \
+    && cd build \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr .. \
+    && make \
+    && sudo make install
+
+RUN \
+    ## Kaldi’s external tool
+    git clone https://github.com/PINTO0309/kaldi.git \
+    && cd kaldi/tools \
+    && extras/check_dependencies.sh \
+    && make \
+    ## Kaldi with the set up to use openblas library
+    && cd ../src \
+    && mkdir -p fakeroot \
+    && ln -s /usr/include/x86_64-linux-gnu/ fakeroot/include \
+    && ln -s /usr/lib/x86_64-linux-gnu/ fakeroot/lib \
+    && ./configure --mathlib=OPENBLAS --openblas-root=fakeroot \
+    && make clean -j $(nproc) \
+    && make depend -j $(nproc) \
+    && make -j $(nproc) \
+    # build & install KaldiDecoder
+    && cd .. \
+    && wget http://archive.hark.jp/harkrepos/dists/${DISTRO}/non-free/source/kaldidecoder-hark_${HARKVER}.tar.xz \
+    && tar -Jxvf kaldidecoder-hark_${HARKVER}.tar.xz \
+    && cd kaldidecoder3 \
+    && sudo chown -R ${USERNAME}:${USERNAME} . \
+    && mkdir -p build \
+    && cd build \
+    && cmake .. -DOPENBLAS_ROOT_DIR:STRING=/usr -DCMAKE_VERBOSE_MAKEFILE:BOOL=TRUE \
+    && make \
+    && sudo make install
+
+# GUI install
+RUN sudo apt-get install -y \
+    hark-designer \
+    harktool5-gui
