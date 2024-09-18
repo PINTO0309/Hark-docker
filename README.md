@@ -33,11 +33,16 @@ mkdir -p ~/.config/pulse
 pactl load-module module-native-protocol-tcp auth-anonymous=1
 
 IP_ADDRESS=$(hostname -I | cut -f1 -d' ')
+
+xhost +local: \
 docker run --rm -it \
 --net host \
 --ipc host \
 -v ~/.config/pulse:/root/.config/pulse \
 -e PULSE_SERVER=$IP_ADDRESS \
+-e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+-e DISPLAY=$DISPLAY \
+-v /tmp/.X11-unix/:/tmp/.X11-unix:rw \
 pinto0309/hark_cpu:3.5.0
 ```
 
