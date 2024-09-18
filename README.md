@@ -34,7 +34,7 @@ pactl load-module module-native-protocol-tcp auth-anonymous=1
 
 IP_ADDRESS=$(hostname -I | cut -f1 -d' ')
 
-xhost +local: \
+xhost +local: && \
 docker run --rm -it \
 --net host \
 --ipc host \
