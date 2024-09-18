@@ -1,6 +1,8 @@
 # Hark-docker
 Building and installing Hark from source code and building a Docker Image.
 
+**This is not an official Hark repository.**
+
 ![image](https://github.com/user-attachments/assets/dc3d1be0-de1e-454d-a39c-eed1f4ea5475)
 
 https://hark.jp/
