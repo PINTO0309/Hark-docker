@@ -5,7 +5,7 @@ Building and installing Hark from source code and building a Docker Image.
 
 ![image](https://github.com/user-attachments/assets/dc3d1be0-de1e-454d-a39c-eed1f4ea5475)
 
-https://hark.jp/
+Official: https://hark.jp/
 
 HARK is open-sourced robot audition software consisting of sound source localization modules, sound source separation modules and automatic speech recognition modules of separated speech signals that work on any robot with any microphone configuration.
 
